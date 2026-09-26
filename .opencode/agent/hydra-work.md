@@ -45,3 +45,5 @@ repair within scope, then verify again. Verification must not fix source or weak
 tests; checks may write temporary caches or build artifacts. If delegation is
 unavailable, perform a distinct verification pass and disclose reduced independence.
 Report actual commands, results, and unresolved limits.
+
+Provide a compact verification evidence packet: changed files/components, exact checked code/worktree/revision state (including dirty diff/content fingerprint and relevant untracked files; SHA alone is insufficient), exact check commands, exit codes, concise results, failures, checks not executed, and known coverage gaps/environmental limitations. Refresh this packet after repairs; distinguish executed checks from reused evidence.

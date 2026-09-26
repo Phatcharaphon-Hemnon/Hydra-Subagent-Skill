@@ -11,16 +11,26 @@ Hydra gives several focused specialists the same task, compares their findings, 
 
 ## 1. Plan with independent heads
 
-Inspect the project and the request first. Choose 3–5 relevant lenses from architecture, correctness, security, performance, and maintainability. Send each selected head the same task and project context. Ask them to work independently and in parallel when the CLI supports it; do not give one head another head's findings before they report.
+Inspect the project and request first. Classify scope and risk before selecting relevant lenses from architecture, correctness, security, performance, and maintainability. Use this adaptive policy; do not automatically select all five heads.
 
-Each head should stay within its lens and return:
+| Task class | Heads | Selection criteria |
+| --- | --- | --- |
+| Bounded low-risk | 2 | Limited affected area, clear acceptance criteria, no broad architectural impact, and no comprehensive review request. |
+| Broader | 3 | Cross-component changes, unclear root causes, refactors, integration work, performance investigations, or behavior changes spanning multiple areas. |
+| Comprehensive or high-risk architecture | 5 | Explicit comprehensive/full review, or a change that is broad, architectural, and high-risk enough to justify all lenses. |
 
-- A short recommendation with concrete project evidence (file locations, behavior, commands, or observations).
-- Assumptions and uncertainties that could change the recommendation.
-- The main tradeoff or alternative considered, with a brief reason for its choice.
-- An ordered, actionable plan and specific risks.
+Head count and required lenses are separate. Comprehensive/high-risk architecture takes precedence over broader work, which takes precedence over bounded work. Select remaining heads by relevance. Explain selection only when useful.
 
-Ask for a concise, reviewable rationale, not private chain-of-thought. Do not demand findings from a lens when the project provides no evidence for them.
+| Task property | Lens | Requirement |
+| --- | --- | --- |
+| Behavior-changing | correctness | Required |
+| Security-sensitive | security | Required |
+| Performance-focused | performance | Normally include |
+| Architectural | architecture | Normally include |
+
+Construct one compact factual packet containing goal, constraints, relevant paths/files/modules/symbols/commands, acceptance criteria, established facts, and important unknowns to investigate. Send every selected head the same packet; use scoped context rather than unnecessary full conversation inheritance when supported. Exclude unrelated history, duplicated explanations, and speculative conclusions from other heads. Heads work independently, in parallel when supported; keep their reports separate until convergence.
+
+Routine reports target 250 words or fewer and at most three material, evidence-backed findings. Each finding needs paths, symbols, observed behavior, commands, configuration, or test evidence; include actionable recommendations and material uncertainties/tradeoffs within that budget. Exceed the limit only for a concrete blocker, security issue, missing evidence, or another issue necessary for a correct handoff. Allow “No relevant concern.” with brief evidence when needed. Request reviewable rationale, never private chain-of-thought.
 
 If subagents are unavailable, disabled, or a delegation call fails, perform the same lenses sequentially in the primary agent. Keep their notes separate until convergence and tell the user that this fallback reduced independence. Claim a head ran only when its delegation actually succeeded and returned a report.
 
@@ -34,7 +44,20 @@ Pass the complete handoff and the user's authorization to `hydra-work`. It perfo
 
 ## 4. Verify
 
-After execution, ask a separate verification head to inspect the result when available. Otherwise, perform a distinct verification pass and identify it as such. Trace the requested behavior and each implemented step to evidence. For code changes, run relevant changed-area tests, the project's existing full test suite when feasible, and configured lint or type checks. For documentation-only changes, inspect the final text; tests may be inapplicable. Exercise meaningful edge and failure cases where relevant. If no tests exist, add focused tests for changed behavior when useful. Fix failures, then rerun the affected checks; report any remaining limit plainly.
+After execution, ask a separate verification head to independently inspect the resulting implementation when available. Otherwise, perform a distinct verification pass and disclose reduced independence. Work supplies a compact evidence packet: changed files/components; exact checked code/worktree/revision state; exact check commands; exit codes; concise results; failures; checks not executed; and known coverage gaps or environmental limitations. A revision SHA alone is insufficient for a dirty worktree: record the worktree diff/content fingerprint including relevant untracked files, or an equivalent state identity. Refresh the packet after repairs.
+
+The evidence packet uses these reviewable Markdown fields (no runtime schema):
+
+| Field | Contents |
+| --- | --- |
+| Changed components | Files/components changed |
+| Checked state | Revision plus staged/unstaged and relevant untracked content identity, or equivalent complete snapshot |
+| Executed checks | Exact command, exit code and concise result for each check, tied to checked state |
+| Failures | Failed checks and observed errors |
+| Not executed | Omitted checks and reasons |
+| Limits | Known coverage gaps and environmental limitations |
+
+Verification independently traces the request and implemented steps to evidence and checks meaningful edge and failure cases where relevant. Reuse an executed check only when it succeeded against the same code state, its command and result are known, and it adequately covers the verified behavior. Do not blindly rerun every expensive check. Rerun when code changed, the result failed or is stale/ambiguous, relevant coverage is missing, repair occurred, or independent execution evidence is needed. Verification must evaluate repaired code and never use stale pre-repair results as proof. Relevant changed-area tests, the existing full suite when feasible, and configured lint/type checks remain required coverage; satisfied same-state checks can supply that evidence. Documentation-only work may require inspection rather than tests. Report actual execution separately from reused evidence.
 
 Finish with the converged decision, what changed, actual check results, and any material unresolved issue. Keep the report proportional to the task.
 
@@ -85,7 +108,7 @@ unavailable, work performs a distinct verification pass and discloses reduced in
   Main-session tool allowlists restrict reading/editing and named Agent delegates.
   Do not invoke these coordinators as child agents: named delegate restrictions are
   intended for the main thread. Planning heads expose only reading/search tools.
-- **Gemini CLI:** the main session calls 3-5 planning heads independently, passes their
+- **Gemini CLI:** the main session selects and calls 2 / 3 / 5 planning heads independently using the adaptive policy, passes their
   reports to `hydra-plan` for convergence, and returns the handoff. After authorization,
   it invokes `hydra-work`, then `hydra-verify`, routing failures back to work for repair.
   Gemini child agents cannot delegate; neither role attempts nested calls. Roles use

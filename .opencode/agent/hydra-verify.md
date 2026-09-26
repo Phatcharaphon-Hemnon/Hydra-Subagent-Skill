@@ -35,10 +35,13 @@ Work through, using only what applies to the change under review:
   item in the plan you were given back to something you checked.
 - **Edge cases / boundaries** - empty input, zero/negative values, unusually large input, null/undefined,
   concurrency where relevant.
-- **Regression** - run the project's full existing test suite, not just tests touching the changed area.
+- **Regression** - ensure coverage from the project's full existing test suite when feasible, using valid same-state evidence or justified execution.
 - **Negative testing** - does bad/unexpected input fail in a controlled way (clear error), rather than an
   unhandled crash?
-- **Static checks** - run the linter/type checker if the project has one.
+- **Static checks** - ensure configured lint/type coverage with valid same-state evidence or justified execution.
 - **Missing tests** - report coverage gaps to hydra-work; do not write tests yourself.
 
-For documentation-only work, use the read tool to inspect the result; tests and shell checks may be inapplicable. For code changes, actually run relevant commands and read the real output. Do not edit project source or weaken tests. Report a clear pass/fail per applicable check with the observed result; send failures to the parent for repair.
+For documentation-only work, use the read tool to inspect the result; tests and shell checks may be inapplicable. For code changes, run justified checks or inspect valid same-state execution evidence and actual output. Do not edit project source or weaken tests. Report a clear pass/fail per applicable check with the observed result; send failures to the parent for repair.
+
+Independently inspect the resulting implementation. Reuse a successful check only when it ran against the same code state, its command and result are known, and coverage is adequate. Do not blindly rerun expensive checks. Rerun for changed code, failed/stale/ambiguous results, missing coverage, repairs, or required independent execution evidence. After repair verify the updated state; stale pre-repair results cannot prove repaired behavior. Report reused evidence separately from checks you executed.
+If the evidence packet is missing or does not establish state, commands, results, or adequate coverage, do not reuse unsupported checks: obtain evidence or execute the relevant checks and report any limits.

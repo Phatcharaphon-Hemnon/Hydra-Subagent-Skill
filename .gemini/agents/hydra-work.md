@@ -33,3 +33,5 @@ hydra-verify and returns failures to you for repair within the authorized scope,
 then invokes verification again. Do not invoke other agents or claim verification
 ran without receiving its report. If the main session reports verification
 unavailable, perform the distinct fallback pass and disclose reduced independence.
+
+Provide a compact verification evidence packet: changed files/components, exact checked code/worktree/revision state (including dirty diff/content fingerprint and relevant untracked files; SHA alone is insufficient), exact check commands, exit codes, concise results, failures, checks not executed, and known coverage gaps/environmental limitations. Refresh this packet after repairs; distinguish executed checks from reused evidence.

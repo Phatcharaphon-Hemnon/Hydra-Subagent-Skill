@@ -2,7 +2,7 @@
 
 Hydra helps an agent review or change a project with several independent perspectives. It asks focused planning heads to inspect the same request, compares their evidence and tradeoffs, carries out the authorized work, then verifies the result. It works with Codex, Claude Code, Gemini CLI, and OpenCode.
 
-> **At a glance:** `hydra-plan` gathers 3–5 heads and converges to a 5-field handoff → you authorize → `hydra-work` implements → `hydra-verify` checks. Planning never edits; verification never fixes source.
+> **At a glance:** Classify scope/risk, choose 2 / 3 / 5 relevant independent heads, then `hydra-plan` converges to a 5-field handoff → you authorize → `hydra-work` implements → `hydra-verify` checks. Planning never edits; verification never fixes source.
 
 ![Hydra workflow](docs/assets/hydra-flow.svg)
 
@@ -21,7 +21,8 @@ Hydra helps an agent review or change a project with several independent perspec
 
 ```mermaid
 flowchart TD
-  REQ[Request] --> HEADS[3-5 independent heads]
+  REQ[Request] --> CLASSIFY[Classify scope/risk]
+  CLASSIFY --> HEADS[Choose 2 / 3 / 5 relevant independent heads]
   HEADS --> PLAN[hydra-plan: converge]
   PLAN --> HANDOFF[Handoff: 5 fields]
   HANDOFF --> GATE{Auth + complete?}
@@ -32,10 +33,12 @@ flowchart TD
   VERIFY -- pass --> DONE[Done + report]
 ```
 
-1. **Plan:** `hydra-plan` inspects and gathers 3–5 independent heads: architecture, correctness, security, performance, and maintainability.
+1. **Plan:** Classify scope/risk and select two relevant heads for bounded low-risk tasks, three for broader work, or five for explicit comprehensive/full review or broad architectural high-risk work. Behavior changes require correctness; security-sensitive work requires security. Normally include performance for performance work and architecture for architectural changes.
 2. **Converge:** `hydra-plan` resolves disagreements against evidence and returns five handoff fields in the conversation: task, ordered steps, files, checks, authorized scope.
 3. **Execute:** `hydra-work` requires the complete handoff and user authorization before mutation. It implements, tests, and repairs within scope.
 4. **Verify:** `hydra-verify` independently checks the result and reports failures to work for repair and re-verification.
+
+Heads receive the same compact factual packet, with scoped history where supported, and target 250 words and three evidence-backed findings. Work sends verification exact state and check evidence; verification independently inspects changes and can reuse successful adequate checks from the same state. Changed, failed, ambiguous, uncovered, or repaired states require justified reruns. Adaptive planning is intended to reduce unnecessary overhead; savings have not been measured. See [benchmark protocol](docs/BENCHMARKS.md).
 
 For example, to fix a slow login page, planning heads may identify an expensive query, behavior to preserve, and account-data risks. The planner chooses a fix, work implements the authorized handoff, and verification checks the finished behavior.
 

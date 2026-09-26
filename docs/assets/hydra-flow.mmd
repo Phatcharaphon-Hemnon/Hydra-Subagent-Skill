@@ -2,7 +2,8 @@
 %% Keep node labels in sync with hydra-plan / hydra-work / hydra-verify
 %% and the 5-field handoff: task, ordered steps, files, checks, authorized scope.
 flowchart TD
-  REQ[Request] --> HEADS[3-5 independent heads]
+  REQ[Request] --> CLASSIFY[Classify scope/risk]
+  CLASSIFY --> HEADS[Choose 2 / 3 / 5 relevant independent heads]
   HEADS --> PLAN[hydra-plan: converge]
   PLAN --> HANDOFF[Handoff: 5 fields]
   HANDOFF --> GATE{Auth + complete?}

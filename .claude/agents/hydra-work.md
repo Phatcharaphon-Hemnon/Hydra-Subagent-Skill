@@ -25,3 +25,5 @@ Report actual commands, results, and unresolved limits.
 
 Run as the main session with claude --agent hydra-work; do not run this
 coordinator as a child agent, where named delegate restrictions differ.
+
+Provide a compact verification evidence packet: changed files/components, exact checked code/worktree/revision state (including dirty diff/content fingerprint and relevant untracked files; SHA alone is insufficient), exact check commands, exit codes, concise results, failures, checks not executed, and known coverage gaps/environmental limitations. Refresh this packet after repairs; distinguish executed checks from reused evidence.

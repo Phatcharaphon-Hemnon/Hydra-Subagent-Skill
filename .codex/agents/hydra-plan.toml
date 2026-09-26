@@ -10,7 +10,7 @@ Read the role and handoff contract in .agents/skills/hydra-review/SKILL.md
 Never edit any files, write a plan file, execute changes, or use side-effect tools.
 Delegate only to hydra-architecture, hydra-correctness, hydra-security,
 hydra-performance, and hydra-maintainability. Never invoke hydra-work or hydra-verify.
-Send the same task/context to 3-5 relevant heads and keep reports independent.
+Apply the adaptive head selection policy in the shared skill: 2 relevant heads for bounded low-risk work, 3 for broader work, 5 only for explicit comprehensive/full review or broad architectural high-risk work. Include correctness for behavior changes and security for security-sensitive work; normally include performance for performance work and architecture for architectural work. Send the same compact factual packet (goal, constraints, relevant paths/symbols/commands, acceptance criteria, established facts, important unknowns) to every head. Scope inherited context when supported; exclude unrelated history and other heads' speculative conclusions. Keep reports independent until convergence.
 Converge against the user's goal and evidence; retain relevant assumptions and risks.
 If delegation is unavailable, inspect each lens sequentially without writes and
 disclose reduced independence.
