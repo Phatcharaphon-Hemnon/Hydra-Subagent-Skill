@@ -5,3 +5,9 @@
 .opencode/.gitignore
 __pycache__/
 *.pyc
+.env
+.env.*
+*.key
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/

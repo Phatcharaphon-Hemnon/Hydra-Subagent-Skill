@@ -37,3 +37,12 @@ Complete the authorized plan with the primary agent. Respect the current CLI's p
 After execution, ask a separate verification head to inspect the result when available. Otherwise, perform a distinct verification pass and identify it as such. Trace the requested behavior and each implemented step to evidence. For code changes, run relevant changed-area tests, the project's existing full test suite when feasible, and configured lint or type checks. For documentation-only changes, inspect the final text; tests may be inapplicable. Exercise meaningful edge and failure cases where relevant. If no tests exist, add focused tests for changed behavior when useful. Fix failures, then rerun the affected checks; report any remaining limit plainly.
 
 Finish with the converged decision, what changed, actual check results, and any material unresolved issue. Keep the report proportional to the task.
+
+## Plan / work split (where implemented)
+
+Where a harness provides them, the pipeline may be split across two agents: `hydra-plan`
+owns stages 1-2 (fan-out plus converge, read-only) and emits a handoff of task, ordered
+steps, files, checks, and authorized scope; `hydra-work` owns stage 3 (executes only that
+authorized scope) and then delegates stage 4 to the verification head. `hydra-plan` never
+edits or executes; `hydra-work` never spawns planning heads or re-converges. The handoff,
+not a head's suggestion, is the authorization boundary for execution.

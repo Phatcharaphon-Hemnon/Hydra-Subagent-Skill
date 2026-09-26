@@ -1,5 +1,5 @@
 ---
-description: Hydra head - verifies finished work using software testing-engineering rigor (test pyramid, edge cases, regression, static checks). Invoked by hydra-orchestrator after execution, as a deliberately separate agent from whoever wrote the code. Can run tests and linters but cannot edit code.
+description: Hydra head - verifies finished work using software testing-engineering rigor (test pyramid, edge cases, regression, static checks). Invoked by hydra-work after execution, as a deliberately separate agent from whoever wrote the code. Can run tests and linters but cannot edit code.
 mode: subagent
 temperature: 0
 permission:

@@ -1,5 +1,5 @@
 ---
-description: Hydra head - analyzes a project purely from a security angle (vulnerabilities, secret handling, input validation, authn/authz) and returns a concrete plan. Invoked by hydra-orchestrator as part of the Hydra pipeline; do not use for making actual code changes.
+description: Hydra head - analyzes a project purely from a security angle (vulnerabilities, secret handling, input validation, authn/authz) and returns a concrete plan. Invoked by hydra-plan as part of the Hydra pipeline; do not use for making actual code changes.
 mode: subagent
 temperature: 0.2
 permission:

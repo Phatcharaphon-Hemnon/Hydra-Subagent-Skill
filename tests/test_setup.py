@@ -53,6 +53,15 @@ class SetupTests(unittest.TestCase):
         self.assertTrue((project / ".agents/skills/hydra-review/SKILL.md").is_file())
         self.assertTrue((project / ".claude/commands/hydra.md").is_file())
         self.assertTrue((project / ".opencode/agent/hydra-orchestrator.md").is_file())
+        self.assertTrue((project / ".opencode/agent/hydra-plan.md").is_file())
+        self.assertTrue((project / ".opencode/agent/hydra-work.md").is_file())
+        plan_text = (project / ".opencode/agent/hydra-plan.md").read_text()
+        work_text = (project / ".opencode/agent/hydra-work.md").read_text()
+        orch_text = (project / ".opencode/agent/hydra-orchestrator.md").read_text()
+        self.assertIn("edit: deny", plan_text)
+        self.assertNotIn("edit: deny", work_text)
+        self.assertIn("hydra-verify", work_text)
+        self.assertIn("eprecated", orch_text)
         self.assertFalse((project / ".codex").exists())
         self.assertFalse(self.user.exists())
 
@@ -110,7 +119,7 @@ class SetupTests(unittest.TestCase):
     def test_legacy_command_installs_all(self):
         result = self.run_setup(script=LEGACY)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("28 installed", result.stdout)
+        self.assertIn("30 installed", result.stdout)
 
 
 if __name__ == "__main__":

@@ -40,7 +40,7 @@ Open a new CLI session in the project you want Hydra to work on, then use the ma
 | Codex | `$hydra-review Review the login flow for correctness and security.` |
 | Claude Code | `/hydra Review the login flow for correctness and security.` |
 | Gemini CLI | `/hydra Review the login flow for correctness and security.` |
-| OpenCode | Select `hydra-orchestrator` and enter the request, or run `opencode run --agent hydra-orchestrator "Review the login flow"`. |
+| OpenCode | Select `hydra-plan` to converge a plan, then `hydra-work` to execute it with verification (`hydra-orchestrator` remains as a deprecated pointer), or run `opencode run --agent hydra-plan "Review the login flow"`. |
 
 A change request works too: “Use Hydra to add password reset, then verify the result.” Hydra follows the instructions and permissions of the CLI and project where it runs. It does not automatically deploy or publish work.
 
@@ -70,7 +70,22 @@ Identical installed files are skipped. If a destination differs, setup stops bef
 bash scripts/setup.sh --cli codex,claude --replace
 ```
 
-If a command is missing after setup, start a new CLI session. In Gemini CLI, `/commands reload`, `/agents reload`, and `/skills reload` can refresh a running session. For OpenCode, verify the `hydra-orchestrator` agent and `hydra-review` skill are visible. For Codex, check that `$hydra-review` appears among available skills.
+If a command is missing after setup, start a new CLI session. In Gemini CLI, `/commands reload`, `/agents reload`, and `/skills reload` can refresh a running session. For OpenCode, verify the `hydra-plan`, `hydra-work`, and `hydra-verify` agents are visible. For Codex, check that `$hydra-review` appears among available skills.
+
+## Using ECC alongside Hydra
+
+ECC (`affaan-m/ECC`, pinned `ecc-universal@2.2.2`) is an external harness layer with
+68 agents, 292 skills, and 94 commands. Hydra stays a thin overlay — do not copy ECC
+files into this repo. See `docs/ECC-MAP.md` for the per-CLI adapter map.
+
+- Claude Code (stable): `npx ecc-universal@2.2.2 setup` (scope `project`), or
+  `/plugin marketplace add https://github.com/affaan-m/ECC` + `/plugin install ecc@ecc`.
+- Codex (supported): `codex plugin marketplace add affaan-m/ECC && codex plugin add ecc@ecc`.
+- OpenCode (beta): in an ECC checkout run `npm install && npm run build:opencode && ./install.sh --profile full --target opencode --enable-hooks`.
+- Gemini (experimental minimal): `./install.sh --profile minimal --target gemini` — no hooks-runtime.
+
+One path per harness, project-scoped `minimal` first, explicit `--enable-hooks` vs
+`--no-hooks` (default `--no-hooks` here), then `node scripts/ecc.js doctor --target <cli>`.
 
 ## Other agent CLIs
 
