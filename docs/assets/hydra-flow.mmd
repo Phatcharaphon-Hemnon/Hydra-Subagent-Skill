@@ -1,0 +1,13 @@
+%% Hydra workflow — source of truth for docs/assets/hydra-flow.svg
+%% Keep node labels in sync with hydra-plan / hydra-work / hydra-verify
+%% and the 5-field handoff: task, ordered steps, files, checks, authorized scope.
+flowchart TD
+  REQ[Request] --> HEADS[3-5 independent heads]
+  HEADS --> PLAN[hydra-plan: converge]
+  PLAN --> HANDOFF[Handoff: 5 fields]
+  HANDOFF --> GATE{Auth + complete?}
+  GATE -- no --> STOP[Stop, explain missing]
+  GATE -- yes --> WORK[hydra-work: implement]
+  WORK --> VERIFY[hydra-verify: check]
+  VERIFY -- fail --> WORK
+  VERIFY -- pass --> DONE[Done + report]
