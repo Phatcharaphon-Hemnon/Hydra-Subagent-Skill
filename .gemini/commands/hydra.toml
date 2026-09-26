@@ -1,0 +1,6 @@
+description = "Run Hydra's multi-perspective plan, execution, and verification workflow"
+prompt = """
+Run Hydra for this request: {{args}}
+
+Activate the `hydra-review` skill and follow its four stages. Use the installed `hydra-*` subagents for independent planning and verification when available. If no request was supplied, ask what work to review or change.
+"""
