@@ -14,7 +14,6 @@ Hydra helps an agent review or change a project with several independent perspec
 - [Start Hydra in your project](#start-hydra-in-your-project)
 - [Update or resolve a conflict](#update-or-resolve-a-conflict)
 - [Check the adapters](#check-the-adapters)
-- [Using ECC alongside Hydra](#using-ecc-alongside-hydra)
 - [Other agent CLIs](#other-agent-clis)
 
 ## How Hydra works in your project
@@ -48,7 +47,7 @@ If planning delegation fails, the planner performs the lenses sequentially using
 
 ## Architecture
 
-One shared workflow, thin per-CLI adapters, external ECC (never vendored).
+One shared workflow with thin per-CLI adapters.
 
 ```mermaid
 flowchart LR
@@ -56,8 +55,6 @@ flowchart LR
   SKILL --> CLAUDE[Claude<br/>.claude/agents/ + commands/hydra.md]
   SKILL --> GEMINI[Gemini<br/>.gemini/agents/ + commands/hydra.toml]
   SKILL --> OPENCODE[OpenCode<br/>.opencode/agent/]
-  ECC[ECC external<br/>not vendored] -.-> CLAUDE
-  ECC -.-> CODEX
 ```
 
 | Layer | Files in this repo |
@@ -157,22 +154,6 @@ With Python 3.11 or newer, install `requirements-dev.txt` in a virtual environme
 With OpenCode installed, `HYDRA_NATIVE_ROLE_CHECK=1 python3 -m unittest discover -s tests -v` also checks effective permissions after the host merges its configuration. This loads agents without starting a model session and writes the CLI's usual log.
 
 CI runs installation and native configuration parsing tests on Linux and macOS with Python 3.11 and 3.14. It does not run authenticated model sessions; follow the acceptance checklist for live role behavior.
-
-</details>
-
-## Using ECC alongside Hydra
-
-<details>
-<summary>ECC install paths</summary>
-
-ECC (`affaan-m/ECC`, pinned `ecc-universal@2.2.2`) is an external harness layer with 68 agents, 292 skills, and 94 commands. Hydra stays a thin overlay — do not copy ECC files into this repo. See `docs/ECC-MAP.md` for the per-CLI adapter map.
-
-- Claude Code (stable): `npx ecc-universal@2.2.2 setup` (scope `project`), or `/plugin marketplace add https://github.com/affaan-m/ECC` + `/plugin install ecc@ecc`.
-- Codex (supported): `codex plugin marketplace add affaan-m/ECC && codex plugin add ecc@ecc`.
-- OpenCode (beta): in an ECC checkout run `npm install && npm run build:opencode && ./install.sh --profile full --target opencode --enable-hooks`.
-- Gemini (experimental minimal): `./install.sh --profile minimal --target gemini` — no hooks-runtime.
-
-One path per harness, project-scoped `minimal` first, explicit `--enable-hooks` vs `--no-hooks` (default `--no-hooks` here), then `node scripts/ecc.js doctor --target <cli>`.
 
 </details>
 
