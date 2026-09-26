@@ -2,5 +2,22 @@ description = "Run Hydra's multi-perspective plan, execution, and verification w
 prompt = """
 Run Hydra for this request: {{args}}
 
-Activate the `hydra-review` skill and follow its four stages. Use the installed `hydra-*` subagents for independent planning and verification when available. If no request was supplied, ask what work to review or change.
+Read the hydra-review skill at .agents/skills/hydra-review/SKILL.md or
+~/.agents/skills/hydra-review/SKILL.md and follow its role and handoff contract.
+If no request was supplied, ask what work to review or change.
+
+You are the main-session router. Gemini subagents cannot delegate. For planning,
+call 3-5 relevant planning heads independently with the same task/context, then
+pass their reports to hydra-plan for convergence. Return its five-field handoff.
+If heads are unavailable, tell hydra-plan to use the sequential read-only fallback
+and disclose reduced independence. Start with planning unless a complete existing
+handoff is supplied for execution. Never perform edits in the routing session.
+
+For authorized execution, pass the complete handoff and existing user authorization
+to hydra-work. Do not request duplicate approval or execute a planning-only request.
+After work returns its changes and checks, invoke hydra-verify independently with
+the handoff and change report. Route failures back to hydra-work for repair within
+scope, then invoke verification again. If verification is unavailable, tell work
+to perform a distinct fallback pass and disclose reduced independence. Report only
+actual verification findings. Missing or unauthorized handoffs stop before mutation.
 """

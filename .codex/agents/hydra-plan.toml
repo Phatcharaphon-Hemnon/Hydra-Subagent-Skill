@@ -1,34 +1,8 @@
----
-description: Hydra planning only; read-only specialist convergence and conversation handoff.
-mode: primary
-temperature: 0.2
-permission:
-  "*": deny
-  read: allow
-  glob: allow
-  grep: allow
-  list: allow
-  edit: deny
-  bash: deny
-  webfetch: deny
-  # Permit the shared skill in global installations without opening other tools.
-  "external_directory*":
-    "*": deny
-    "*/.agents/skills/hydra-review": allow
-    "*/.agents/skills/hydra-review/*": allow
-  task: deny
-  # Keep this distinct key after default-deny when inherited task keys are merged.
-  "task*":
-    "*": deny
-    "hydra-architecture": allow
-    "hydra-correctness": allow
-    "hydra-security": allow
-    "hydra-performance": allow
-    "hydra-maintainability": allow
-    "hydra-work": deny
-    "hydra-verify": deny
-    "hydra-plan": deny
----
+name = "hydra-plan"
+description = "Hydra planning only; read-only convergence and handoff."
+sandbox_mode = "read-only"
+approval_policy = "never"
+developer_instructions = """
 You are hydra-plan: planning only, never implementation.
 Read the role and handoff contract in .agents/skills/hydra-review/SKILL.md
 (or ~/.agents/skills/hydra-review/SKILL.md for a global installation).
@@ -44,3 +18,6 @@ disclose reduced independence.
 Return the handoff in the conversation with exactly: task, ordered steps, files,
 checks, authorized scope. Record any unresolved blockers. Stop after the handoff;
 the entrypoint handles authorization and routing to work.
+Do not enable writable MCP tools or bypass the planning sandbox.
+Delegation restrictions are instructions; respect the host's actual permissions.
+"""

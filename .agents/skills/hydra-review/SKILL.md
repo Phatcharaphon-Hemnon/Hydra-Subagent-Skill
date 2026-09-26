@@ -30,7 +30,7 @@ Compare the reports against the user's goal and project evidence. Resolve confli
 
 ## 3. Execute
 
-Complete the authorized plan with the primary agent. Respect the current CLI's plan mode, permissions, and approval requirements. Do not treat a head's suggestion as new user authorization. Keep track of the actual changes and any deviations needed to make the result work.
+Pass the complete handoff and the user's authorization to `hydra-work`. It performs the authorized changes; the planning role never executes them. Respect the current CLI's plan mode, permissions, and approval requirements. Do not treat a head's suggestion as new user authorization. Keep track of actual changes and implementation adjustments within scope.
 
 ## 4. Verify
 
@@ -38,11 +38,60 @@ After execution, ask a separate verification head to inspect the result when ava
 
 Finish with the converged decision, what changed, actual check results, and any material unresolved issue. Keep the report proportional to the task.
 
-## Plan / work split (where implemented)
+## Role and handoff contract
 
-Where a harness provides them, the pipeline may be split across two agents: `hydra-plan`
-owns stages 1-2 (fan-out plus converge, read-only) and emits a handoff of task, ordered
-steps, files, checks, and authorized scope; `hydra-work` owns stage 3 (executes only that
-authorized scope) and then delegates stage 4 to the verification head. `hydra-plan` never
-edits or executes; `hydra-work` never spawns planning heads or re-converges. The handoff,
-not a head's suggestion, is the authorization boundary for execution.
+`hydra-plan` owns stages 1-2 only. Inspect using read-only tools, delegate only to the
+five planning heads, and converge their independent reports. Never edit any files,
+write a plan file, execute changes, invoke work or verification, or use side-effect
+tools. Planning heads also stay read-only and must not delegate further. If delegation
+is unavailable, perform the lenses sequentially within the same restrictions and
+disclose reduced independence.
+
+Return a handoff in the conversation with exactly these five headings:
+
+- **task**: the requested outcome.
+- **ordered steps**: actionable implementation steps.
+- **files**: files or bounded components to change.
+- **checks**: verification commands or inspection criteria.
+- **authorized scope**: proposed change boundaries, exclusions, and any unresolved blockers.
+
+Stop after the handoff. A handoff records proposed scope; the user's instructions
+authorize execution. The entrypoint may route it to work when execution is already
+authorized by the conversation. Never ask for duplicate approval.
+
+`hydra-work` owns execution and checks. Before any mutation, require all five handoff
+fields, no unresolved implementation blockers, and user authorization covering the
+scope. If the handoff is missing, incomplete, or unauthorized, explain what is missing
+and stop before mutation. Never create a new plan, spawn planning heads, or re-converge.
+Implementation decisions and repairs within authorized scope are allowed; report them.
+If completion requires expanding scope, stop the affected work and request authorization.
+
+Delegate only to `hydra-verify` after implementation. Return failures to work for repair
+within scope, then verify again. Verification never fixes source or weakens tests;
+checks may write temporary caches or build artifacts. If verification delegation is
+unavailable, work performs a distinct verification pass and discloses reduced independence.
+
+## Platform routing and enforcement
+
+- **OpenCode:** select the primary `hydra-plan` and `hydra-work` agents. Native permissions
+  deny planner/head shell and edits, allow only named planning delegates, and restrict
+  work delegation to verification. Unknown planning tools are denied by default.
+- **Codex:** the main session delegates to the installed TOML roles. Planning uses a
+  read-only sandbox without approval escalation; work uses workspace-write. Delegate
+  allowlists are instructions, not native per-role permission rules. Live parent
+  permission overrides and writable MCP tools can weaken isolation; do not enable
+  writable connectors for planning or bypass its sandbox.
+- **Claude Code:** launch `claude --agent hydra-plan` or `claude --agent hydra-work`.
+  Main-session tool allowlists restrict reading/editing and named Agent delegates.
+  Do not invoke these coordinators as child agents: named delegate restrictions are
+  intended for the main thread. Planning heads expose only reading/search tools.
+- **Gemini CLI:** the main session calls 3-5 planning heads independently, passes their
+  reports to `hydra-plan` for convergence, and returns the handoff. After authorization,
+  it invokes `hydra-work`, then `hydra-verify`, routing failures back to work for repair.
+  Gemini child agents cannot delegate; neither role attempts nested calls. Roles use
+  explicit native tool allowlists without inherited MCP or wildcard tools. The main
+  session only routes reports and authorization; it does not perform edits itself.
+
+For `/hydra` and `$hydra-review`, start with planning unless the user supplies an existing
+complete handoff for execution. Route authorized execution to work and return actual
+verification results. Do not silently execute a planning-only request.

@@ -31,29 +31,39 @@ bash scripts/setup.sh --cli codex,gemini --project /path/to/your-project
 
 The shared skill is installed once in `.agents/skills/hydra-review/`. Only adapters for the CLIs you select are copied. OpenCode uses `XDG_CONFIG_HOME/opencode` for a global install when `XDG_CONFIG_HOME` is set, and `~/.config/opencode` otherwise. `scripts/install-global.sh` remains available for older instructions; it installs all four globally.
 
+Codex discovers the standalone TOML roles in `.codex/agents/`; Gemini discovers
+the shared `.agents/skills/` alias. Claude's `/hydra` command reads the shared
+workflow directly, so it does not depend on Claude discovering that alias.
+Use current CLI versions with custom-agent support; if a host disables delegation,
+Hydra reports its sequential fallback instead of claiming independent heads ran.
+
 ## Start Hydra in your project
 
 Open a new CLI session in the project you want Hydra to work on, then use the matching entry point:
 
 | CLI | Example |
 | --- | --- |
-| Codex | `$hydra-review Review the login flow for correctness and security.` |
-| Claude Code | `/hydra Review the login flow for correctness and security.` |
-| Gemini CLI | `/hydra Review the login flow for correctness and security.` |
-| OpenCode | Select `hydra-plan` to converge a plan, then `hydra-work` to execute it with verification (`hydra-orchestrator` remains as a deprecated pointer), or run `opencode run --agent hydra-plan "Review the login flow"`. |
+| Codex | `$hydra-review Plan a review of the login flow.` The main session routes planning to `hydra-plan` and authorized execution to `hydra-work`. |
+| Claude Code | Launch `claude --agent hydra-plan`, then request the plan. For authorized execution, launch `claude --agent hydra-work` with the handoff and authorization. `/hydra` gives routing instructions when used outside a coordinator session. |
+| Gemini CLI | `/hydra Plan a review of the login flow.` The main session gathers head reports, calls `hydra-plan`, and routes authorized work and verification separately. |
+| OpenCode | Select `hydra-plan` to converge a plan, then `hydra-work` to execute it with verification, or run `opencode run --agent hydra-plan "Review the login flow"`. |
 
-A change request works too: “Use Hydra to add password reset, then verify the result.” Hydra follows the instructions and permissions of the CLI and project where it runs. It does not automatically deploy or publish work.
+A change request works too: “Use Hydra to plan and implement password reset, then verify the result.” A planning-only request stops after the handoff. Work needs a complete handoff and user authorization; authorization already given in the conversation is retained without another approval question. For a separate work session, include the handoff and your execution instruction. Hydra follows the CLI's permissions and does not automatically deploy or publish work.
 
 ## How Hydra works in your project
 
-1. **Plan:** The primary agent inspects the project and selects 3–5 relevant heads: architecture, correctness, security, performance, and maintainability. Each selected head gets the same request and reports evidence, assumptions, tradeoffs, steps, and risks. They work independently and in parallel when the CLI allows it.
-2. **Converge:** The primary agent compares the reports, resolves disagreements against the project evidence and your request, and chooses one actionable plan. Suggestions outside your request stay separate.
-3. **Execute:** The primary agent performs the authorized changes. The planning heads do not edit files.
-4. **Verify:** A separate verification head checks the result against the request and runs relevant tests and static checks. If it finds a failure, the primary agent repairs it and checks again.
+1. **Plan:** `hydra-plan` inspects and gathers 3–5 independent heads: architecture, correctness, security, performance, and maintainability. In Gemini, the main session gathers reports because child agents cannot delegate. Neither planning roles nor heads write files or execute changes.
+2. **Converge:** `hydra-plan` resolves disagreements against evidence and returns five handoff fields in the conversation: task, ordered steps, files, checks, authorized scope. It stops without writing a plan file.
+3. **Execute:** `hydra-work` requires the complete handoff and user authorization before mutation. It implements, tests, and repairs within scope; expansion requires authorization. It never starts a new planning cycle.
+4. **Verify:** `hydra-verify` independently checks the result. It reports failures to work for repair and re-verification. In Gemini, the main session routes these calls. Verification never fixes source or weakens tests; tests may write caches and build outputs.
 
-For example, if you ask Hydra to fix a slow login page, the performance head may identify an expensive query, correctness may identify a behavior that must be preserved, and security may check that the fix does not expose account data. The primary agent chooses a fix that accounts for those findings, then the verification head checks the finished behavior.
+For example, to fix a slow login page, planning heads may identify an expensive query, behavior to preserve, and account-data risks. The planner chooses a fix, work implements the authorized handoff, and verification checks the finished behavior.
 
-If subagents are disabled or a delegation fails, Hydra performs the same lenses sequentially in the primary agent and tells you that the independence of the review was reduced. It reports which checks actually ran and which were inapplicable.
+If planning delegation fails, the planner performs the lenses sequentially using read-only tools and discloses reduced independence. If verification delegation fails, work performs a distinct verification pass and discloses the same limitation. It reports actual checks and results.
+
+OpenCode uses native default-deny planning permissions, including shell denial and named delegates. Claude's main-session role tool lists restrict both tools and named delegates. Codex uses read-only planning sandboxes without escalation, but parent permission overrides can affect them and delegation restrictions are instructions. Gemini's role tool lists exclude editing/shell from planning; routing remains the main session's responsibility. Do not enable writable MCP tools or bypass planning restrictions. These adapters do not impose identical security boundaries on every host.
+
+Configuration references: [Codex roles](https://learn.chatgpt.com/docs/agent-configuration/subagents), [Claude agents](https://code.claude.com/docs/en/sub-agents), [Gemini agents](https://geminicli.com/docs/core/subagents/), [OpenCode permissions](https://opencode.ai/docs/permissions/).
 
 ## Update or resolve a conflict
 
@@ -71,6 +81,21 @@ bash scripts/setup.sh --cli codex,claude --replace
 ```
 
 If a command is missing after setup, start a new CLI session. In Gemini CLI, `/commands reload`, `/agents reload`, and `/skills reload` can refresh a running session. For OpenCode, verify the `hydra-plan`, `hydra-work`, and `hydra-verify` agents are visible. For Codex, check that `$hydra-review` appears among available skills.
+
+Older OpenCode installations may still contain `hydra-orchestrator.md`. Setup does not delete retired files; inspect and remove that obsolete local definition manually so it cannot bypass the split.
+
+## Check the adapters
+
+With Python 3.11 or newer, install `requirements-dev.txt` in a virtual environment and run
+`python3 -m unittest discover -s tests -v`. The suite parses native configuration
+and checks installation behavior. [Role acceptance checks](docs/ROLE-CHECKS.md)
+cover live CLI scenarios; configuration tests alone cannot prove model behavior.
+With OpenCode installed, `HYDRA_NATIVE_ROLE_CHECK=1 python3 -m unittest discover -s tests -v`
+also checks effective permissions after the host merges its configuration. This
+loads agents without starting a model session and writes the CLI's usual log.
+CI runs installation and native configuration parsing tests on
+Linux and macOS with Python 3.11 and 3.14. It does not run authenticated model
+sessions; follow the acceptance checklist for live role behavior.
 
 ## Using ECC alongside Hydra
 

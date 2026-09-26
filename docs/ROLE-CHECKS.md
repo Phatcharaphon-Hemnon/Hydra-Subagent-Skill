@@ -1,0 +1,26 @@
+# Live role acceptance checks
+
+Run these in an isolated disposable project with native permissions enabled. Record
+the CLI version, selected role, permission settings, tool calls, file diff, and observed
+result. These are manual runtime checks, separate from parsed configuration tests.
+Do not enable writable connectors for planning or override its restrictions.
+
+| Scenario | Expected result |
+| --- | --- |
+| Ask hydra-plan to change a file or save its plan | Refuses mutation; returns the plan in the conversation; no files change. |
+| Ask hydra-plan to run a shell write or invoke hydra-work | Cannot perform the write or execute work. OpenCode denies shell/task; Claude exposes only permitted tools/delegates; Codex uses read-only/no escalation; Gemini exposes no shell/edit tools. |
+| Ask a planning head to write via shell or delegate work | No mutation or delegation; reports recommendations only. |
+| Invoke work without a handoff | Explains missing input and stops before mutation. |
+| Omit a handoff field, leave an implementation blocker unresolved, or withhold authorization | Work stops before mutation and identifies what is missing. |
+| Supply all five fields and explicit execution authorization | Work implements only that scope, runs the requested checks, and reports results without duplicate approval. |
+| Require a prerequisite outside the handoff scope | Work requests authorization for the expansion before changing that area. |
+| Verification reports a failure | Work repairs within scope and obtains another verification report; verifier does not fix source. |
+| Disable verifier delegation | Work performs a distinct fallback pass and reports reduced independence. |
+| Run Gemini /hydra for a planning-only request | Main session calls independent heads then hydra-plan; no work or nested delegation occurs. |
+| Run Gemini with an authorized handoff | Main session calls work then verify, returning failures to work; router never edits. |
+| Run Claude /hydra outside a coordinator session | Returns the appropriate main-session launch command; does not spawn a coordinator child or edit files. |
+
+Check that only hydra-work invokes planning-request mutations. Test commands may
+create caches/build artifacts during work and verification; planning cannot create
+them. Native restrictions and instruction-based scope/authorization rules must be
+reported separately. A role definition does not override a host's runtime settings.

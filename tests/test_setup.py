@@ -13,6 +13,21 @@ SETUP = PACKAGE / "scripts/setup.sh"
 LEGACY = PACKAGE / "scripts/install-global.sh"
 
 
+def package_files(clis):
+    """Public installer inputs, including the shared skill once."""
+    files = [PACKAGE / ".agents/skills/hydra-review/SKILL.md"]
+    for cli in clis:
+        if cli == "opencode":
+            files.extend((PACKAGE / ".opencode/agent").glob("hydra-*.md"))
+        else:
+            suffix = "toml" if cli == "codex" else "md"
+            files.extend((PACKAGE / f".{cli}/agents").glob(f"hydra-*.{suffix}"))
+        if cli in ("claude", "gemini"):
+            suffix = "md" if cli == "claude" else "toml"
+            files.append(PACKAGE / f".{cli}/commands/hydra.{suffix}")
+    return files
+
+
 class SetupTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="hydra-setup-test-")
@@ -43,7 +58,7 @@ class SetupTests(unittest.TestCase):
         self.assertFalse((self.xdg / "opencode").exists())
         second = self.run_setup("--cli", "codex,gemini")
         self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertIn("0 installed, 14 unchanged", second.stdout)
+        self.assertIn(f"0 installed, {len(package_files(('codex', 'gemini')))} unchanged", second.stdout)
 
     def test_project_install_does_not_touch_global_destination(self):
         project = self.base / "my project"
@@ -52,16 +67,9 @@ class SetupTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertTrue((project / ".agents/skills/hydra-review/SKILL.md").is_file())
         self.assertTrue((project / ".claude/commands/hydra.md").is_file())
-        self.assertTrue((project / ".opencode/agent/hydra-orchestrator.md").is_file())
+        self.assertFalse((project / ".opencode/agent/hydra-orchestrator.md").exists())
         self.assertTrue((project / ".opencode/agent/hydra-plan.md").is_file())
         self.assertTrue((project / ".opencode/agent/hydra-work.md").is_file())
-        plan_text = (project / ".opencode/agent/hydra-plan.md").read_text()
-        work_text = (project / ".opencode/agent/hydra-work.md").read_text()
-        orch_text = (project / ".opencode/agent/hydra-orchestrator.md").read_text()
-        self.assertIn("edit: deny", plan_text)
-        self.assertNotIn("edit: deny", work_text)
-        self.assertIn("hydra-verify", work_text)
-        self.assertIn("eprecated", orch_text)
         self.assertFalse((project / ".codex").exists())
         self.assertFalse(self.user.exists())
 
@@ -94,6 +102,13 @@ class SetupTests(unittest.TestCase):
         self.assertEqual(self.run_setup("--all", "--cli", "codex").returncode, 2)
         self.assertEqual(self.run_setup("--project", str(self.base / "absent"), "--all").returncode, 2)
 
+    def test_empty_cli_selection_is_rejected_without_installing(self):
+        for selection in ("", " ", ","):
+            with self.subTest(selection=selection):
+                result = self.run_setup("--cli", selection)
+                self.assertEqual(result.returncode, 2)
+                self.assertFalse(self.user.exists())
+
     def test_interactive_multi_selection(self):
         master, slave = pty.openpty()
         try:
@@ -113,13 +128,50 @@ class SetupTests(unittest.TestCase):
             if slave >= 0:
                 os.close(slave)
         self.assertTrue((self.user / ".codex/agents/hydra-correctness.toml").is_file())
-        self.assertTrue((self.xdg / "opencode/agent/hydra-orchestrator.md").is_file())
+        self.assertTrue((self.xdg / "opencode/agent/hydra-plan.md").is_file())
+        self.assertFalse((self.xdg / "opencode/agent/hydra-orchestrator.md").exists())
         self.assertFalse((self.user / ".claude").exists())
 
     def test_legacy_command_installs_all(self):
         result = self.run_setup(script=LEGACY)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("30 installed", result.stdout)
+        self.assertIn(f"{len(package_files(('codex', 'claude', 'gemini', 'opencode')))} installed", result.stdout)
+
+    def test_role_pairs_for_every_cli_and_scope(self):
+        for scope in ("global", "project"):
+            for cli in ("codex", "claude", "gemini", "opencode"):
+                with self.subTest(scope=scope, cli=cli):
+                    destination = self.base / f"{scope}-{cli}"
+                    if scope == "project":
+                        destination.mkdir()
+                        args = ("--cli", cli, "--project", str(destination))
+                        root = destination / f".{cli}"
+                    else:
+                        args = ("--cli", cli)
+                        root = self.xdg / "opencode" if cli == "opencode" else self.user / f".{cli}"
+                    first = self.run_setup(*args)
+                    self.assertEqual(first.returncode, 0, first.stderr)
+                    folder = "agent" if cli == "opencode" else "agents"
+                    suffix = "toml" if cli == "codex" else "md"
+                    for role in ("plan", "work"):
+                        relative = Path(folder) / f"hydra-{role}.{suffix}"
+                        self.assertEqual((root / relative).read_bytes(),
+                                         (PACKAGE / f".{cli}" / relative).read_bytes())
+                    again = self.run_setup(*args)
+                    self.assertEqual(again.returncode, 0, again.stderr)
+                    self.assertIn(f"0 installed, {len(package_files((cli,)))} unchanged", again.stdout)
+
+    def test_role_conflict_is_backed_up(self):
+        self.assertEqual(self.run_setup("--cli", "codex").returncode, 0)
+        role = self.user / ".codex/agents/hydra-plan.toml"
+        role.write_text("custom planner\n")
+        self.assertEqual(self.run_setup("--cli", "codex").returncode, 1)
+        self.assertEqual(role.read_text(), "custom planner\n")
+        replaced = self.run_setup("--cli", "codex", "--replace")
+        self.assertEqual(replaced.returncode, 0, replaced.stderr)
+        backups = list(role.parent.glob("hydra-plan.toml.hydra-backup-*"))
+        self.assertEqual(len(backups), 1)
+        self.assertEqual(backups[0].read_text(), "custom planner\n")
 
 
 if __name__ == "__main__":

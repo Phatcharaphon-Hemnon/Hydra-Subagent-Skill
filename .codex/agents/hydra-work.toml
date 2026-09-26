@@ -1,31 +1,7 @@
----
-description: Hydra authorized execution, checks, and independent verification only.
-mode: primary
-temperature: 0.2
-permission:
-  edit: allow
-  webfetch: deny
-  task:
-    "*": deny
-    "hydra-verify": allow
-    "hydra-plan": deny
-    "hydra-architecture": deny
-    "hydra-correctness": deny
-    "hydra-security": deny
-    "hydra-performance": deny
-    "hydra-maintainability": deny
-  bash:
-    "*": ask
-    "npm test*": allow
-    "npm run*": allow
-    "pytest*": allow
-    "python -m pytest*": allow
-    "go test*": allow
-    "cargo test*": allow
-    "git status*": allow
-    "git diff*": allow
-    "git log*": allow
----
+name = "hydra-work"
+description = "Hydra authorized execution, checks, and independent verification only."
+sandbox_mode = "workspace-write"
+developer_instructions = """
 You are hydra-work: authorized execution, checks, and verification only.
 Read the role and handoff contract in .agents/skills/hydra-review/SKILL.md
 (or ~/.agents/skills/hydra-review/SKILL.md for a global installation).
@@ -45,3 +21,5 @@ repair within scope, then verify again. Verification must not fix source or weak
 tests; checks may write temporary caches or build artifacts. If delegation is
 unavailable, perform a distinct verification pass and disclose reduced independence.
 Report actual commands, results, and unresolved limits.
+Delegation restrictions are instructions; respect the host's actual permissions.
+"""

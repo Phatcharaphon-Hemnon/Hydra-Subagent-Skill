@@ -87,7 +87,7 @@ fi
 
 add_cli() {
   local hydra_existing
-  for hydra_existing in "${hydra_selected[@]}"; do
+  for hydra_existing in ${hydra_selected[@]+"${hydra_selected[@]}"}; do
     [[ "$hydra_existing" == "$1" ]] && return 0
   done
   hydra_selected+=("$1")
@@ -97,7 +97,7 @@ parse_clis() {
   local hydra_input="$1" hydra_token
   local hydra_tokens=()
   IFS=',' read -r -a hydra_tokens <<< "$hydra_input"
-  for hydra_token in "${hydra_tokens[@]}"; do
+  for hydra_token in ${hydra_tokens[@]+"${hydra_tokens[@]}"}; do
     hydra_token="${hydra_token#"${hydra_token%%[![:space:]]*}"}"
     hydra_token="${hydra_token%"${hydra_token##*[![:space:]]}"}"
     case "$hydra_token" in
@@ -114,7 +114,7 @@ parse_clis() {
       *) printf 'Unknown CLI choice: %s\n' "$hydra_token" >&2; return 1 ;;
     esac
   done
-  ((${#hydra_selected[@]} > 0))
+  [[ -n "${hydra_selected[*]:-}" ]]
 }
 
 if [[ "$hydra_all" == true ]]; then
@@ -215,7 +215,7 @@ for hydra_index in "${!hydra_sources[@]}"; do
   fi
 done
 
-if ((${#hydra_conflicts[@]} > 0)) && [[ "$hydra_replace" == false ]]; then
+if [[ -n "${hydra_conflicts[*]:-}" && "$hydra_replace" == false ]]; then
   printf 'Setup stopped. Existing files differ:\n' >&2
   printf '  %s\n' "${hydra_conflicts[@]}" >&2
   printf 'Review them, then rerun with --replace to back them up and update.\n' >&2

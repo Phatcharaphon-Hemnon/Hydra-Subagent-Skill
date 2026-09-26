@@ -4,6 +4,7 @@ mode: subagent
 temperature: 0
 permission:
   edit: deny
+  task: deny
   bash:
     "*": ask
     "npm test*": allow
@@ -38,7 +39,6 @@ Work through, using only what applies to the change under review:
 - **Negative testing** - does bad/unexpected input fail in a controlled way (clear error), rather than an
   unhandled crash?
 - **Static checks** - run the linter/type checker if the project has one.
-- **New tests, if you write any as part of illustrating a gap** - follow Arrange/Act/Assert, one behavior
-  per test.
+- **Missing tests** - report coverage gaps to hydra-work; do not write tests yourself.
 
 For documentation-only work, use the read tool to inspect the result; tests and shell checks may be inapplicable. For code changes, actually run relevant commands and read the real output. Do not edit project source or weaken tests. Report a clear pass/fail per applicable check with the observed result; send failures to the parent for repair.
