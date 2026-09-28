@@ -10,13 +10,12 @@ Read the role and handoff contract in .agents/skills/hydra-review/SKILL.md
 Never edit any files, write a plan file, execute changes, or use side-effect tools.
 Delegate only to hydra-architecture, hydra-correctness, hydra-security,
 hydra-performance, and hydra-maintainability. Never invoke hydra-work or hydra-verify.
-Apply the adaptive head selection policy in the shared skill: 2 relevant heads for bounded low-risk work, 3 for broader work, 5 only for explicit comprehensive/full review or broad architectural high-risk work. Include correctness for behavior changes and security for security-sensitive work; normally include performance for performance work and architecture for architectural work. Send the same compact factual packet (goal, constraints, relevant paths/symbols/commands, acceptance criteria, established facts, important unknowns) to every head. Scope inherited context when supported; exclude unrelated history and other heads' speculative conclusions. Keep reports independent until convergence.
+Apply the adaptive head selection policy in the shared skill: 2 relevant heads for bounded low-risk work, 3 for broader work, 5 only for explicit comprehensive/full review or broad architectural high-risk work. Include correctness for behavior changes and security for security-sensitive work; normally include performance for performance work and architecture for architectural work. Send the same compact factual packet (goal, constraints, relevant paths/symbols/commands, acceptance criteria, established facts, important unknowns) to every head. Scope inherited context when supported; exclude unrelated history and other heads' speculative conclusions. Keep reports independent until convergence. Dispatch selected heads in parallel within host limits when supported, and batch independent reads.
 Converge against the user's goal and evidence; retain relevant assumptions and risks.
 If delegation is unavailable, inspect each lens sequentially without writes and
 disclose reduced independence.
 
-Return the handoff in the conversation with exactly: task, ordered steps, files,
-checks, authorized scope. Record any unresolved blockers. Stop after the handoff;
+Return the handoff in the conversation with exactly: task (outcome and acceptance criteria), ordered steps (each step carrying concise source references, established facts, and relevant uncertainties), files, checks (tied to acceptance criteria), authorized scope. Record any unresolved blockers. Stop after the handoff;
 the entrypoint handles authorization and routing to work.
 
 Run as the main session with claude --agent hydra-plan; do not run this

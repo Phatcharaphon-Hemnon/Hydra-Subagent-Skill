@@ -28,7 +28,7 @@ Head count and required lenses are separate. Comprehensive/high-risk architectur
 | Performance-focused | performance | Normally include |
 | Architectural | architecture | Normally include |
 
-Construct one compact factual packet containing goal, constraints, relevant paths/files/modules/symbols/commands, acceptance criteria, established facts, and important unknowns to investigate. Send every selected head the same packet; use scoped context rather than unnecessary full conversation inheritance when supported. Exclude unrelated history, duplicated explanations, and speculative conclusions from other heads. Heads work independently, in parallel when supported; keep their reports separate until convergence.
+Construct one compact factual packet containing goal, constraints, relevant paths/files/modules/symbols/commands, acceptance criteria, established facts, and important unknowns to investigate. Send every selected head the same packet; use scoped context rather than unnecessary full conversation inheritance when supported. Exclude unrelated history, duplicated explanations, and speculative conclusions from other heads. Heads work independently. Dispatch all selected heads together in parallel within host limits when the host supports it, and batch independent reads so shared discovery is performed once; keep their reports separate until convergence.
 
 Routine reports target 250 words or fewer and at most three material, evidence-backed findings. Each finding needs paths, symbols, observed behavior, commands, configuration, or test evidence; include actionable recommendations and material uncertainties/tradeoffs within that budget. Exceed the limit only for a concrete blocker, security issue, missing evidence, or another issue necessary for a correct handoff. Allow “No relevant concern.” with brief evidence when needed. Request reviewable rationale, never private chain-of-thought.
 
@@ -40,7 +40,7 @@ Compare the reports against the user's goal and project evidence. Resolve confli
 
 ## 3. Execute
 
-Pass the complete handoff and the user's authorization to `hydra-work`. It performs the authorized changes; the planning role never executes them. Respect the current CLI's plan mode, permissions, and approval requirements. Do not treat a head's suggestion as new user authorization. Keep track of actual changes and implementation adjustments within scope.
+Pass the user's authorization to `hydra-work`, together with the handoff when planning produced one. Work can also run directly on an authorized request with no `hydra-plan` handoff; it then records a brief scope (task, files or bounded components, and checks) before editing. When a handoff is present it carries concise source references, established facts, acceptance criteria, and relevant uncertainties so work does not repeat discovery; work re-reads the cited current source before editing and stops if a carried fact no longer holds. Use scoped context rather than inheriting the whole planning conversation, and exclude redundant planning transcripts and the other heads' reports. It performs the authorized changes; the planning role never executes them. Respect the current CLI's plan mode, permissions, and approval requirements. Do not treat a head's suggestion as new user authorization. Keep track of actual changes and implementation adjustments within scope.
 
 ## 4. Verify
 
@@ -57,6 +57,8 @@ The evidence packet uses these reviewable Markdown fields (no runtime schema):
 | Not executed | Omitted checks and reasons |
 | Limits | Known coverage gaps and environmental limitations |
 
+Verification receives the handoff, work's implementation adjustments, and the checked-state evidence; use scoped context and exclude redundant planning transcripts. Collect every check result before verification begins. Run independent checks concurrently only when resources and mutable fixtures, caches, outputs, and services cannot conflict; otherwise run them sequentially.
+
 Verification independently traces the request and implemented steps to evidence and checks meaningful edge and failure cases where relevant. Reuse an executed check only when it succeeded against the same code state, its command and result are known, and it adequately covers the verified behavior. Do not blindly rerun every expensive check. Rerun when code changed, the result failed or is stale/ambiguous, relevant coverage is missing, repair occurred, or independent execution evidence is needed. Verification must evaluate repaired code and never use stale pre-repair results as proof. Relevant changed-area tests, the existing full suite when feasible, and configured lint/type checks remain required coverage; satisfied same-state checks can supply that evidence. Documentation-only work may require inspection rather than tests. Report actual execution separately from reused evidence.
 
 Finish with the converged decision, what changed, actual check results, and any material unresolved issue. Keep the report proportional to the task.
@@ -72,20 +74,22 @@ disclose reduced independence.
 
 Return a handoff in the conversation with exactly these five headings:
 
-- **task**: the requested outcome.
-- **ordered steps**: actionable implementation steps.
+- **task**: the requested outcome and its acceptance criteria.
+- **ordered steps**: actionable implementation steps, each carrying concise source references (paths/symbols), established facts, and relevant uncertainties so work does not repeat discovery.
 - **files**: files or bounded components to change.
-- **checks**: verification commands or inspection criteria.
+- **checks**: verification commands or inspection criteria tied to the acceptance criteria.
 - **authorized scope**: proposed change boundaries, exclusions, and any unresolved blockers.
 
 Stop after the handoff. A handoff records proposed scope; the user's instructions
 authorize execution. The entrypoint may route it to work when execution is already
 authorized by the conversation. Never ask for duplicate approval.
 
-`hydra-work` owns execution and checks. Before any mutation, require all five handoff
-fields, no unresolved implementation blockers, and user authorization covering the
-scope. If the handoff is missing, incomplete, or unauthorized, explain what is missing
-and stop before mutation. Never create a new plan, spawn planning heads, or re-converge.
+`hydra-work` owns execution and checks. Before any mutation, require explicit user
+authorization covering the scope and no unresolved implementation blockers; a
+`hydra-plan` handoff is optional. If a complete handoff is present, honor its five
+fields; if it is absent, record a brief scope (task, files or bounded components, and
+checks) from the authorized request before editing. If the request is unauthorized or a
+blocker is unresolved, explain what is missing and stop before mutation. Re-read the handoff's cited current source before editing and stop if a carried fact no longer holds. Collect every check result before verification: never overlap repairs with checks or verification. Run independent checks concurrently only when resources and mutable fixtures, caches, outputs, and services cannot conflict; otherwise run them sequentially. Never create a new plan, spawn planning heads, or re-converge.
 Implementation decisions and repairs within authorized scope are allowed; report them.
 If completion requires expanding scope, stop the affected work and request authorization.
 
@@ -108,8 +112,7 @@ unavailable, work performs a distinct verification pass and discloses reduced in
   Main-session tool allowlists restrict reading/editing and named Agent delegates.
   Do not invoke these coordinators as child agents: named delegate restrictions are
   intended for the main thread. Planning heads expose only reading/search tools.
-- **Gemini CLI:** the main session selects and calls 2 / 3 / 5 planning heads independently using the adaptive policy, passes their
-  reports to `hydra-plan` for convergence, and returns the handoff. After authorization,
+- **Gemini CLI:** the main session selects and calls 2 / 3 / 5 planning heads independently using the adaptive policy, dispatches them in parallel within host limits when supported, batches independent reads, passes their reports to `hydra-plan` for convergence, and returns the handoff. After authorization,
   it invokes `hydra-work`, then `hydra-verify`, routing failures back to work for repair.
   Gemini child agents cannot delegate; neither role attempts nested calls. Roles use
   explicit native tool allowlists without inherited MCP or wildcard tools. The main

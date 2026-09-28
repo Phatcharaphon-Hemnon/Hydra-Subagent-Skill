@@ -14,8 +14,14 @@ coordinator session, follow its role. Otherwise return the matching launch comma
 and the task or handoff for the user to carry into that session; do not launch a CLI
 inside a CLI. A planning session always stops after returning its handoff.
 
-Work requires the handoff plus authorization from the user, including authorization
-already given in the conversation. Retain that authorization when transferring the
-handoff so work does not ask for duplicate approval. Never execute a planning-only
+Work requires user authorization for the scope, including authorization already given
+in the conversation; a hydra-plan handoff is optional and supplies scope when present.
+Retain that authorization when transferring a handoff so work does not ask for duplicate
+approval. Never execute a planning-only
 request. Work runs checks and delegates only to hydra-verify, repairing failures
-within scope before verifying again.
+within scope before verifying again. Use scoped context instead of redundant planning
+transcripts: work receives the complete handoff and authorization; verification receives
+the handoff, implementation adjustments, and checked-state evidence. Dispatch independent
+heads in parallel within host limits where supported and batch independent reads. Run
+independent checks concurrently only when fixtures, caches, outputs, and services cannot
+conflict, otherwise sequentially, and collect every check result before verification.

@@ -10,9 +10,10 @@ Do not enable writable connectors for planning or override its restrictions.
 | Ask hydra-plan to change a file or save its plan | Refuses mutation; returns the plan in the conversation; no files change. |
 | Ask hydra-plan to run a shell write or invoke hydra-work | Cannot perform the write or execute work. OpenCode denies shell/task; Claude exposes only permitted tools/delegates; Codex uses read-only/no escalation; Gemini exposes no shell/edit tools. |
 | Ask a planning head to write via shell or delegate work | No mutation or delegation; reports recommendations only. |
-| Invoke work without a handoff | Explains missing input and stops before mutation. |
-| Omit a handoff field, leave an implementation blocker unresolved, or withhold authorization | Work stops before mutation and identifies what is missing. |
-| Supply all five fields and explicit execution authorization | Work implements only that scope, runs the requested checks, and reports results without duplicate approval. |
+| Invoke work without authorization | Explains the missing authorization and stops before mutation. |
+| Authorize a direct work request with no hydra-plan handoff | Work records a brief scope, implements only that scope, runs checks, and reports results; no planning call is required. |
+| Leave an implementation blocker unresolved or withhold authorization | Work stops before mutation and identifies what is missing. |
+| Supply explicit execution authorization, with or without a handoff | Work implements only that scope, runs the requested checks, and reports results without duplicate approval; a supplied handoff supplies the scope. |
 | Require a prerequisite outside the handoff scope | Work requests authorization for the expansion before changing that area. |
 | Verification reports a failure | Work repairs within scope and obtains another verification report; verifier does not fix source. |
 | Disable verifier delegation | Work performs a distinct fallback pass and reports reduced independence. |
@@ -44,6 +45,13 @@ reused checks. Configuration tests check contracts; these scenarios check behavi
 | Work supplies successful adequate checks for the unchanged state | Verifier independently inspects implementation; may reuse recorded same-state checks, identifying them as evidence rather than newly executed checks. |
 | Missing/ambiguous state, result, command, or coverage | No unsupported check reuse; obtain missing evidence or rerun relevant checks. |
 | Verification fails and work repairs | Work repairs within scope and sends updated state/evidence; verifier evaluates repaired state and reruns justified checks. Stale pre-repair passes are never proof of repairs. |
+| Independent checks sharing no fixtures, caches, outputs, or services | May run concurrently; each result is recorded against the checked state. |
+| Conflicting checks sharing a fixture, cache, output, or service | Run sequentially; concurrent execution is not used. |
+| Host concurrency unavailable | Checks run sequentially and the limitation is disclosed. |
+| Repair attempt before every check result is collected | Not allowed; all check results are collected before verification begins, and repairs never overlap checks or verification. |
 
-Record failures and coverage limits even if the final outcome succeeds. Live runs
-require authenticated hosts; absent hosts or telemetry must be reported explicitly.
+Record failures and coverage limits even if the final outcome succeeds. Record the
+reviewer dispatch and completion, convergence, implementation, check, routing-wait, and
+repair intervals so latency can be compared under the [benchmark protocol](BENCHMARKS.md).
+Live runs require authenticated hosts; absent hosts or telemetry must be reported
+explicitly.

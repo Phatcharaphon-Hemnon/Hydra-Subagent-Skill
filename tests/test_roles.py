@@ -118,7 +118,7 @@ class RoleTests(unittest.TestCase):
             if name in ("hydra-plan", "hydra-work"):
                 self.assertIn("Gemini subagents cannot delegate", body)
 
-    def test_work_profiles_have_handoff_gate_and_scope_rules(self):
+    def test_work_profiles_require_authorization_not_handoff(self):
         for cli in ("codex", "claude", "gemini", "opencode"):
             with self.subTest(cli=cli):
                 if cli == "codex":
@@ -126,8 +126,10 @@ class RoleTests(unittest.TestCase):
                 else:
                     folder = "agent" if cli == "opencode" else "agents"
                     _, body = markdown_config(PACKAGE / f".{cli}/{folder}/hydra-work.md")
-                for rule in ("Before any mutation", "stop before mutation", "never ask for duplicate approval",
-                             "Never create a new plan", "request authorization", "hydra-verify"):
+                for rule in ("explicit user authorization", "handoff is optional", "brief scope",
+                             "Before any mutation", "stop before mutation",
+                             "never ask for duplicate approval", "Never create a new plan",
+                             "request authorization", "hydra-verify"):
                     self.assertIn(rule, body)
 
     def test_command_formats_and_routing(self):
@@ -217,6 +219,56 @@ class AdaptivePolicyTests(unittest.TestCase):
         codex = tomllib.loads((PACKAGE / ".codex/agents/hydra-verify.toml").read_text())
         self.assertEqual(codex["sandbox_mode"], "workspace-write")
         self.assertIn("must not edit project source or weaken tests", codex["developer_instructions"])
+
+    def test_scoped_handoff_carries_facts_and_uncertainties(self):
+        for cli in ("codex", "claude", "gemini", "opencode"):
+            with self.subTest(cli=cli):
+                plan = self.body(cli, "hydra-plan")
+                for term in ("source references", "established facts", "relevant uncertainties",
+                             "acceptance criteria"):
+                    self.assertIn(term, plan)
+                work = self.body(cli, "hydra-work")
+                self.assertIn("Re-read the handed-off source before editing", work)
+                self.assertIn("without pulling in redundant planning transcripts", work)
+
+    def test_scheduling_and_check_serialization(self):
+        serial = ("Run independent checks concurrently only when resources and mutable fixtures, "
+                  "caches, outputs, and services cannot conflict; otherwise run them sequentially.")
+        for cli in ("codex", "claude", "gemini", "opencode"):
+            with self.subTest(cli=cli):
+                plan = self.body(cli, "hydra-plan")
+                self.assertIn("parallel within host limits", plan)
+                self.assertIn("batch independent reads", plan)
+                self.assertIn("every check result before verification", self.body(cli, "hydra-work"))
+                for name in ("hydra-work", "hydra-verify"):
+                    self.assertIn(serial, self.body(cli, name))
+
+    def test_routing_dispatch_and_session_boundaries(self):
+        claude = markdown_config(PACKAGE / ".claude/commands/hydra.md")[1]
+        gemini = tomllib.loads((PACKAGE / ".gemini/commands/hydra.toml").read_text())["prompt"]
+        for text in (claude, gemini):
+            self.assertIn("parallel within host limits", text)
+            self.assertIn("handoff is optional", text)
+        # Claude's main-session boundary is unchanged.
+        self.assertIn("claude --agent hydra-plan", claude)
+        self.assertIn("never spawn them as", claude)
+        # Gemini's main-session routing is unchanged.
+        self.assertIn("Gemini subagents cannot delegate", gemini)
+        self.assertIn("updated checked", gemini)
+
+    def test_role_permissions_unchanged_by_latency_work(self):
+        """Latency edits must not loosen any role's permission surface."""
+        self.assertEqual(markdown_config(PACKAGE / ".opencode/agent/hydra-plan.md")[0]["permission"]["edit"], "deny")
+        self.assertEqual(markdown_config(PACKAGE / ".opencode/agent/hydra-work.md")[0]["permission"]["edit"], "allow")
+        self.assertEqual(markdown_config(PACKAGE / ".opencode/agent/hydra-verify.md")[0]["permission"]["edit"], "deny")
+        self.assertEqual(tomllib.loads((PACKAGE / ".codex/agents/hydra-plan.toml").read_text())["sandbox_mode"],
+                         "read-only")
+        plan_tools = {t.strip() for t in
+                      markdown_config(PACKAGE / ".claude/agents/hydra-plan.md")[0]["tools"].split("Agent(")[0].rstrip(", ").split(",")}
+        self.assertEqual(plan_tools, {"Read", "Grep", "Glob"})
+        for name in ("hydra-plan", "hydra-verify"):
+            self.assertNotIn("write_file", set(markdown_config(PACKAGE / f".gemini/agents/{name}.md")[0]["tools"]))
+        self.assertIn("write_file", set(markdown_config(PACKAGE / ".gemini/agents/hydra-work.md")[0]["tools"]))
 
     def test_no_stale_fixed_head_count_and_valid_workflow_asset(self):
         paths = [PACKAGE / "README.md", PACKAGE / ".agents/skills/hydra-review/SKILL.md"]

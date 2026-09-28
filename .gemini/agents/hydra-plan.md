@@ -15,12 +15,11 @@ Read the role and handoff contract in .agents/skills/hydra-review/SKILL.md
 Never edit any files, write a plan file, execute changes, or use side-effect tools.
 Gemini subagents cannot delegate. The main session must select and gather 2 / 3 / 5 independent
 planning-head reports using the adaptive head selection policy in the shared skill,
-then supply them with the same compact factual packet. Validate the selected count
+then supply them with the same compact factual packet. Dispatch selected heads in parallel within host limits when supported, and batch independent reads. Validate the selected count
 and mandatory lenses against that policy before convergence. Converge these
 reports; do not invoke other agents. If reports are missing, return the missing
 input to the main session. A sequential lens fallback is allowed only when the
 main session reports delegation unavailable; disclose reduced independence.
 
-Return the handoff in the conversation with exactly: task, ordered steps, files,
-checks, authorized scope. Record any unresolved blockers. Stop after the handoff;
+Return the handoff in the conversation with exactly: task (outcome and acceptance criteria), ordered steps (each step carrying concise source references, established facts, and relevant uncertainties), files, checks (tied to acceptance criteria), authorized scope. Record any unresolved blockers. Stop after the handoff;
 the entrypoint handles authorization and routing to work.

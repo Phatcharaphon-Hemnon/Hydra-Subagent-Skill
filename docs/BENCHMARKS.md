@@ -6,8 +6,9 @@ savings have been measured here; this document defines evaluation, not results.
 ## Conditions and fixtures
 
 Compare single-agent work, original Hydra, and optimized adaptive Hydra. Pin the
-original Hydra instruction baseline to `bf8f80aa5d282f787d5077f6aa12000b9f82fd30` and
-record the optimized instruction revision/content identity. These identify workflow
+original Hydra instruction baseline (the current revision) to
+`bf8f80aa5d282f787d5077f6aa12000b9f82fd30` and record the candidate optimized
+instruction revision/content identity. These identify workflow
 instructions, not the target project's code: every condition starts from the same
 fixture revision and identical relevant untracked files.
 
@@ -31,15 +32,17 @@ resources. Retain transcripts and check evidence with sensitive data redacted.
 | Field | Record |
 | --- | --- |
 | Identity | Run ID, task class, condition, repetition, host/CLI and version, model/configuration, workflow identity, target starting revision/content identity |
-| Timing | Elapsed wall-clock time from request through final verification, planning time through handoff, verification time summed across passes |
+| Timing | Elapsed wall-clock from request through final verification, decomposed into reviewer dispatch, reviewer completion, convergence, implementation, check, routing-wait, and repair intervals; verification time summed across passes |
 | Tokens | Total input and total output tokens across every agent/model call, including retries, fallback, work, verification and repairs |
 | Context duplication | Duplicated input/context tokens when available, or per-call input sizes plus packet/history identities and repeated content spans sufficient to estimate duplication; label estimates |
 | Calls | Model/agent call count, repair-loop count, selected planning heads and actual completed delegations |
 | Evidence | Exact checks, checked state, exit codes, results, reused checks, omitted checks and coverage/environmental limits |
 | Outcome | Acceptance result, failed assertions, investigation and repair details |
 
-Use monotonic timestamps. Planning time is zero/not applicable for a condition
-without a planning phase, identified explicitly. Include final independent
+Use monotonic timestamps for every interval boundary. Record overlapping operations,
+such as parallel reviewer dispatch, as overlap and count their shared wall time once in
+elapsed time rather than summing it into multiple intervals. Planning time is zero or not
+applicable for a condition without a planning phase, identified explicitly. Include final independent
 acceptance time consistently in elapsed and verification totals. Sum token usage
 across agents rather than reporting only the main session. Mark unavailable token
 or duplication telemetry **unknown**, never zero. Record cached input separately
