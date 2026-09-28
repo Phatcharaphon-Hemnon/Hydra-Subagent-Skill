@@ -3,12 +3,13 @@
 %% and the 5-field handoff: task, ordered steps, files, checks, authorized scope.
 flowchart TD
   REQ[Request] --> CLASSIFY[Classify scope/risk]
+  CLASSIFY -->|authorized directly: handoff optional| GATE{Authorization gate: authorized + no blockers?}
   CLASSIFY --> HEADS[Choose 2 / 3 / 5 relevant independent heads]
   HEADS --> PLAN[hydra-plan: converge]
-  PLAN --> HANDOFF[Handoff: 5 fields]
-  HANDOFF --> GATE{Auth + complete?}
-  GATE -- no --> STOP[Stop, explain missing]
+  PLAN --> HANDOFF[Handoff: 5 fields when planning runs]
+  HANDOFF --> GATE
   GATE -- yes --> WORK[hydra-work: implement]
+  GATE -- no --> STOP[Stop, explain what is missing]
   WORK --> VERIFY[hydra-verify: check]
   VERIFY -- fail --> WORK
   VERIFY -- pass --> DONE[Done + report]

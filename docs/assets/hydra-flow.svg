@@ -1,37 +1,54 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="800" height="220" viewBox="0 0 800 220" role="img" aria-labelledby="hydraTitle hydraDesc">
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="380" viewBox="0 0 800 380" role="img" aria-labelledby="hydraTitle hydraDesc">
 <title id="hydraTitle">Hydra workflow</title>
-<desc id="hydraDesc">Request, classify scope/risk, choose 2 / 3 / 5 relevant independent heads, hydra-plan converges to a 5-field handoff, auth gate, hydra-work implements, hydra-verify checks with repair loop.</desc>
-<rect x="0" y="0" width="800" height="220" rx="12" fill="#ffffff" stroke="#d0d7de"/>
-<text x="24" y="30" font-family="sans-serif" font-size="16" font-weight="bold" fill="#111111">Hydra: plan-converge-execute-verify</text>
-<g font-family="sans-serif" font-size="13" text-anchor="middle">
-<rect x="24" y="52" width="120" height="60" rx="8" fill="#eef6ff" stroke="#1f6feb"/>
-<text x="84" y="76" fill="#111111">Request</text>
-<text x="84" y="94" fill="#555555">classify scope/risk</text>
-<rect x="164" y="52" width="140" height="60" rx="8" fill="#eef6ff" stroke="#1f6feb"/>
-<text x="234" y="76" fill="#111111">2 / 3 / 5 heads</text>
-<text x="234" y="94" fill="#555555">independent</text>
-<rect x="324" y="52" width="140" height="60" rx="8" fill="#fff8c5" stroke="#9a6700"/>
-<text x="394" y="76" fill="#111111">converge + handoff</text>
-<text x="394" y="94" fill="#555555">authorization gate</text>
-<rect x="484" y="52" width="130" height="60" rx="8" fill="#dafbe1" stroke="#1a7f37"/>
-<text x="549" y="76" fill="#111111">hydra-work</text>
-<text x="549" y="94" fill="#555555">implements</text>
-<rect x="634" y="52" width="140" height="60" rx="8" fill="#ffebe9" stroke="#cf222e"/>
-<text x="704" y="76" fill="#111111">hydra-verify</text>
-<text x="704" y="94" fill="#555555">checks</text>
-</g>
-<g stroke="#57606a" stroke-width="2" marker-end="url(#hydraArrow)">
+<desc id="hydraDesc">Request, classify scope/risk, then an authorization gate. An already authorized request enters hydra-work directly and records a brief scope; otherwise 2 / 3 / 5 relevant independent heads converge through hydra-plan to a 5-field handoff first. hydra-work implements and hydra-verify checks with a repair loop.</desc>
+<rect x="0" y="0" width="800" height="380" rx="12" fill="#ffffff" stroke="#d0d7de"/>
+<text x="24" y="30" font-family="sans-serif" font-size="16" font-weight="bold" fill="#111111">Hydra: classify - plan (optional) - authorize - work - verify</text>
 <defs>
 <marker id="hydraArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
 <path d="M0,0 L8,4 L0,8 Z" fill="#57606a"/>
 </marker>
 </defs>
-<line x1="144" y1="82" x2="164" y2="82"/>
-<line x1="304" y1="82" x2="324" y2="82"/>
-<line x1="464" y1="82" x2="484" y2="82"/>
-<line x1="614" y1="82" x2="634" y2="82"/>
+<g font-family="sans-serif" font-size="13" text-anchor="middle">
+<rect x="24" y="44" width="170" height="60" rx="8" fill="#eef6ff" stroke="#1f6feb"/>
+<text x="109" y="68" fill="#111111">Request</text>
+<text x="109" y="86" fill="#555555">classify scope/risk</text>
+<rect x="234" y="44" width="190" height="60" rx="8" fill="#eef6ff" stroke="#1f6feb"/>
+<text x="329" y="68" fill="#111111">2 / 3 / 5 heads</text>
+<text x="329" y="86" fill="#555555">relevant independent</text>
+<rect x="464" y="44" width="200" height="60" rx="8" fill="#fff8c5" stroke="#9a6700"/>
+<text x="564" y="68" fill="#111111">hydra-plan: converge</text>
+<text x="564" y="86" fill="#555555">Handoff: 5 fields (optional)</text>
+<rect x="24" y="184" width="170" height="60" rx="8" fill="#fbefff" stroke="#8250df"/>
+<text x="109" y="208" fill="#111111">authorization gate</text>
+<text x="109" y="226" fill="#555555">authorized + no blockers</text>
+<rect x="234" y="184" width="170" height="60" rx="8" fill="#dafbe1" stroke="#1a7f37"/>
+<text x="319" y="208" fill="#111111">hydra-work</text>
+<text x="319" y="226" fill="#555555">implements</text>
+<rect x="444" y="184" width="170" height="60" rx="8" fill="#ffebe9" stroke="#cf222e"/>
+<text x="529" y="208" fill="#111111">hydra-verify</text>
+<text x="529" y="226" fill="#555555">checks</text>
+<rect x="654" y="184" width="126" height="60" rx="8" fill="#dafbe1" stroke="#1a7f37"/>
+<text x="717" y="208" fill="#111111">Done</text>
+<text x="717" y="226" fill="#555555">+ report</text>
 </g>
-<text x="24" y="140" font-family="sans-serif" font-size="12" fill="#333333">Handoff: task / ordered steps / files / checks / authorized scope. Auth gate stops if incomplete.</text>
-<text x="24" y="160" font-family="sans-serif" font-size="12" fill="#333333">Verify pass: done + report. Fail: work repairs, refreshes evidence, then reverify. Planning never edits; verification never fixes source.</text>
-<text x="24" y="190" font-family="sans-serif" font-size="11" fill="#57606a">Source: docs/assets/hydra-flow.mmd. Edit the .mmd first, then re-export this SVG.</text>
+<g stroke="#57606a" stroke-width="2" fill="none" marker-end="url(#hydraArrow)">
+<line x1="194" y1="74" x2="234" y2="74"/>
+<line x1="424" y1="74" x2="464" y2="74"/>
+<path d="M109,104 V184"/>
+<path d="M564,104 V144 H150 V184"/>
+<line x1="194" y1="214" x2="234" y2="214"/>
+<line x1="404" y1="214" x2="444" y2="214"/>
+<line x1="614" y1="214" x2="654" y2="214"/>
+<path d="M529,244 V272 H319 V244"/>
+</g>
+<g font-family="sans-serif" font-size="10" fill="#57606a">
+<text x="116" y="168">authorized directly</text>
+<text x="300" y="136" text-anchor="middle">handoff when planned (optional)</text>
+<text x="634" y="204" text-anchor="middle">pass</text>
+<text x="424" y="288" text-anchor="middle">fail: work repairs, then reverify</text>
+</g>
+<text x="24" y="306" font-family="sans-serif" font-size="12" fill="#333333">Direct path: an authorized request enters hydra-work with a brief scope; planning and the handoff are optional.</text>
+<text x="24" y="324" font-family="sans-serif" font-size="12" fill="#333333">Handoff fields: task / ordered steps / files / checks / authorized scope. The gate stops if unauthorized or blocked.</text>
+<text x="24" y="342" font-family="sans-serif" font-size="12" fill="#333333">Verify pass: done + report. Fail: work repairs, refreshes evidence, then reverify. Planning never edits; verification never fixes source.</text>
+<text x="24" y="364" font-family="sans-serif" font-size="11" fill="#57606a">Source: docs/assets/hydra-flow.mmd. Edit the .mmd first, then re-export this SVG.</text>
 </svg>
