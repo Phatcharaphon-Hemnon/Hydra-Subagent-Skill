@@ -6,7 +6,7 @@ Run Hydra for this request: $ARGUMENTS
 
 Read the `hydra-review` workflow at `.agents/skills/hydra-review/SKILL.md` in this project, or `~/.agents/skills/hydra-review/SKILL.md` for a global installation. If the request is missing, ask what work to review or change.
 
-Use the role and handoff contract. Start with planning unless a complete existing
+Use the role and handoff contract. Tier 0 tasks bypass planning entirely and go directly to hydra-work with no heads or packets. Start with planning unless a complete existing
 handoff is supplied for execution. Run coordinators as main sessions using
 `claude --agent hydra-plan` and `claude --agent hydra-work`; never spawn them as
 child agents or execute changes in this routing session. If already in the matching
@@ -17,7 +17,7 @@ inside a CLI. A planning session always stops after returning its handoff.
 Work requires user authorization for the scope, including authorization already given
 in the conversation; a hydra-plan handoff is optional and supplies scope when present.
 Retain that authorization when transferring a handoff so work does not ask for duplicate
-approval. Never execute a planning-only
+approval. Tier 0 tasks enter work directly with no planning heads or packets; work records a brief scope and runs proportional verification. Never execute a planning-only
 request. Work runs checks and delegates only to hydra-verify, repairing failures
 within scope before verifying again. Use scoped context instead of redundant planning
 transcripts: work receives the complete handoff and authorization; verification receives

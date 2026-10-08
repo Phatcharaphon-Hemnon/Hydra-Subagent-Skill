@@ -29,35 +29,36 @@ class RoleTests(unittest.TestCase):
     @unittest.skipUnless(os.environ.get("HYDRA_NATIVE_ROLE_CHECK") == "1" and shutil.which("opencode"),
                          "set HYDRA_NATIVE_ROLE_CHECK=1 to check installed OpenCode")
     def test_native_opencode_effective_permissions(self):
-        result = subprocess.run(["opencode", "--pure", "agent", "list"], cwd=PACKAGE,
-                                capture_output=True, text=True, timeout=30)
+        result = subprocess.run(["opencode", "debug", "agents"], cwd=PACKAGE,
+                                capture_output=True, text=True, timeout=60)
         self.assertEqual(result.returncode, 0, result.stderr)
-        decoder = json.JSONDecoder()
-        agents = {}
-        for match in re.finditer(r"^([\w-]+) \(([^)]+)\)\n", result.stdout, re.M):
-            if match[1].startswith("hydra-"):
-                agents[match[1]], _ = decoder.raw_decode(result.stdout[match.end():].lstrip())
+        agents = {entry["id"]: entry.get("permissions", [])
+                  for entry in json.loads(result.stdout)
+                  if entry.get("id", "").startswith("hydra-")}
+        self.assertTrue(HEADS | {"hydra-plan", "hydra-work", "hydra-verify"} <= set(agents))
 
-        def action(name, tool, target):
+        def effect(name, action, resource):
             matching = [rule for rule in agents[name]
-                        if fnmatch.fnmatchcase(tool, rule["permission"])
-                        and fnmatch.fnmatchcase(target, rule["pattern"])]
-            return matching[-1]["action"] if matching else "ask"
+                        if fnmatch.fnmatchcase(action, rule["action"])
+                        and fnmatch.fnmatchcase(resource, rule["resource"])]
+            return matching[-1]["effect"] if matching else "ask"
 
         for name in HEADS | {"hydra-plan"}:
-            for tool, target in (("edit", "example.txt"), ("bash", "touch example.txt"),
+            for tool, target in (("edit", "example.txt"), ("shell", "touch example.txt"),
                                  ("mcp_example_write", "example.txt")):
                 with self.subTest(agent=name, tool=tool):
-                    self.assertEqual(action(name, tool, target), "deny")
+                    self.assertEqual(effect(name, tool, target), "deny")
+            # Delegation tool is "task"; "task*" rules glob-match it.
             for delegate in HEADS | {"hydra-work", "hydra-verify", "hydra-plan", "unknown"}:
                 expected = "allow" if name == "hydra-plan" and delegate in HEADS else "deny"
-                self.assertEqual(action(name, "task", delegate), expected)
-        self.assertEqual(action("hydra-work", "edit", "example.txt"), "allow")
-        self.assertEqual(action("hydra-plan", "external_directory",
+                self.assertEqual(effect(name, "task", delegate), expected)
+        self.assertEqual(effect("hydra-work", "edit", "example.txt"), "allow")
+        self.assertEqual(effect("hydra-plan", "external_directory",
                                 "/tmp/user/.agents/skills/hydra-review/SKILL.md"), "allow")
-        self.assertEqual(action("hydra-plan", "external_directory", "/tmp/unrelated"), "deny")
+        self.assertEqual(effect("hydra-plan", "external_directory", "/tmp/unrelated"), "deny")
         for delegate in HEADS | {"hydra-plan", "hydra-verify", "unknown"}:
-            self.assertEqual(action("hydra-work", "task", delegate),
+            # The host translates the "task:" map into "subagent" rules.
+            self.assertEqual(effect("hydra-work", "subagent", delegate),
                              "allow" if delegate == "hydra-verify" else "deny")
 
     def test_opencode_planning_is_read_only_transitively(self):
@@ -283,6 +284,57 @@ class AdaptivePolicyTests(unittest.TestCase):
         text = " ".join(svg.getroot().itertext())
         for term in ("2 / 3 / 5", "classify scope/risk", "authorization gate", "reverify"):
             self.assertIn(term, text)
+
+
+class FastPathAndSecurityTests(unittest.TestCase):
+    """Tier 0 fast path and lazy security-skill routing contracts."""
+
+    def test_tier_table_and_fast_path(self):
+        text = (PACKAGE / ".agents/skills/hydra-review/SKILL.md").read_text()
+        for term in ("Tier 0", "Tier 1", "Tier 2", "Tier 3",
+                     "Skip multi-agent planning entirely",
+                     "reclassify to Tier 1",
+                     "proportional verification"):
+            self.assertIn(term, text)
+        self.assertIn("independent of head count", text)
+
+    def test_adapters_route_tier_zero(self):
+        for cli in ("codex", "claude", "gemini", "opencode"):
+            with self.subTest(cli=cli):
+                self.assertIn("Tier 0 tasks bypass planning entirely",
+                              AdaptivePolicyTests.body(cli, "hydra-plan"))
+                self.assertIn("Tier 0 tasks enter here directly",
+                              AdaptivePolicyTests.body(cli, "hydra-work"))
+        claude = markdown_config(PACKAGE / ".claude/commands/hydra.md")[1]
+        gemini = tomllib.loads((PACKAGE / ".gemini/commands/hydra.toml").read_text())["prompt"]
+        for command in (claude, gemini):
+            self.assertIn("Tier 0", command)
+
+    def test_security_discovery_contract(self):
+        text = (PACKAGE / ".agents/skills/hydra-review/SKILL.md").read_text()
+        for term in ("docs/SECURITY-SKILLS.md",
+                     "untrusted instructions",
+                     "grants no shell",
+                     "never copy it into an auto-discovered skills directory",
+                     "Offensive procedures apply only within explicitly authorized scope"):
+            self.assertIn(term, text)
+        for cli in ("codex", "claude", "gemini", "opencode"):
+            with self.subTest(cli=cli):
+                self.assertIn("docs/SECURITY-SKILLS.md",
+                              AdaptivePolicyTests.body(cli, "hydra-plan"))
+                self.assertIn("never the whole external library",
+                              AdaptivePolicyTests.body(cli, "hydra-work"))
+
+    def test_converge_once_and_required_reviews(self):
+        text = (PACKAGE / ".agents/skills/hydra-review/SKILL.md").read_text()
+        self.assertIn("Converge once", text)
+        self.assertIn("Never cancel a required independent review purely for speed", text)
+
+    def test_verify_security_acceptance(self):
+        for cli in ("codex", "claude", "gemini", "opencode"):
+            with self.subTest(cli=cli):
+                self.assertIn("security acceptance criteria",
+                              AdaptivePolicyTests.body(cli, "hydra-verify"))
 
 
 if __name__ == "__main__":

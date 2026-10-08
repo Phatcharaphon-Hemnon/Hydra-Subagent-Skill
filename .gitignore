@@ -9,5 +9,11 @@ __pycache__/
 .env.*
 *.key
 
+# Optional pinned external security skills (installed per-machine, never committed).
+/vendor/
+
+# Local benchmark virtualenv (created by bench/bootstrap.sh, never committed).
+/bench/.venv/
+
 # graft's local graph cache — regenerable, not committed (run `graft build`).
 /graft/

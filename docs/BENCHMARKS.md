@@ -5,23 +5,33 @@ savings have been measured here; this document defines evaluation, not results.
 
 ## Conditions and fixtures
 
-Compare single-agent work, original Hydra, and optimized adaptive Hydra. Pin the
-original Hydra instruction baseline (the current revision) to
+Compare single-agent work, baseline Hydra, and optimized Hydra. Pin the
+baseline Hydra instruction baseline (the current revision) to
 `bf8f80aa5d282f787d5077f6aa12000b9f82fd30` and record the candidate optimized
 instruction revision/content identity. These identify workflow
 instructions, not the target project's code: every condition starts from the same
 fixture revision and identical relevant untracked files.
 
-Use three fixed task classes: a small bounded fix, a cross-component change, and a
-security-sensitive change. Freeze each prompt, acceptance criteria, starting code,
+Use six fixed task categories: a small low-risk bug fix, a bounded change
+needing independent review, a cross-component
+feature implementation, a large refactoring task, a security-sensitive API
+change, and a complex debugging task. Freeze each prompt, acceptance criteria, starting code,
 check commands, models, permissions, host configuration and CLI version before
 running. Keep host/network/cache conditions as comparable as practical; record
 unavoidable differences. Do not change models between conditions. The single-agent
-condition completes equivalent work and final verification itself; original and
-adaptive Hydra follow their respective instructions. Final acceptance is evaluated
+condition completes equivalent work and final verification itself; baseline and
+optimized Hydra follow their respective instructions. Final acceptance is evaluated
 by the same independent evaluator for all conditions.
 
-Run three repetitions per condition and task class: 27 runs per tested host.
+Run three repetitions per condition and task category: 54 runs per tested host (3 conditions x 6 categories x 3 repetitions).
+The runnable harness is `scripts/hydra-bench.sh`: `--list` shows the matrix,
+`--init` creates a per-host ledger with rotated run order, `--record` appends
+per-run evidence, `--report` prints medians with speedup ratios, and `--dry-run`
+validates the harness offline with placeholder runs (never a performance result).
+Fixture checks run on an isolated venv (`bash bench/bootstrap.sh`, never system
+packages) via `HYDRA_BENCH_PYTHON`; offline preflight is
+`scripts/hydra-preflight.sh`, and quota-gated smoke runs are
+`scripts/hydra-smoke.sh` (see `bench/README.md`).
 Evaluate Codex, Claude Code, Gemini CLI, and OpenCode separately where authenticated
 hosts are available. Reset fixtures between runs and rotate condition order within
 each repetition to reduce order effects. Do not run concurrent conditions sharing
@@ -31,7 +41,7 @@ resources. Retain transcripts and check evidence with sensitive data redacted.
 
 | Field | Record |
 | --- | --- |
-| Identity | Run ID, task class, condition, repetition, host/CLI and version, model/configuration, workflow identity, target starting revision/content identity |
+| Identity | Run ID, task category, condition, repetition, host/CLI and version, model/configuration, workflow identity, target starting revision/content identity |
 | Timing | Elapsed wall-clock from request through final verification, decomposed into reviewer dispatch, reviewer completion, convergence, implementation, check, routing-wait, and repair intervals; verification time summed across passes |
 | Tokens | Total input and total output tokens across every agent/model call, including retries, fallback, work, verification and repairs |
 | Context duplication | Duplicated input/context tokens when available, or per-call input sizes plus packet/history identities and repeated content spans sufficient to estimate duplication; label estimates |
@@ -50,11 +60,23 @@ when available; do not silently substitute billed tokens for total context token
 
 ## Analysis and publication
 
-Report medians separately by task class, condition, and host for timing, tokens,
+Report medians separately by task category, condition, and host for timing, tokens,
 calls and repair loops. Publish individual outcomes and ranges beside medians;
 three repetitions are an initial benchmark, not a strong statistical conclusion.
-Do not combine task classes into one overall savings number. Compare only matched
+Do not combine task categories into one overall savings number. Compare only matched
 conditions and indicate unknown metrics and environmental differences.
+
+Speedup and time reduction use median wall-clock elapsed time per task category:
+
+Speedup = Baseline Wall Time / Optimized Wall Time
+
+Time Reduction (%) = (Baseline Time - Optimized Time) / Baseline Time x 100
+
+The optimized Hydra is faster only when measured wall-clock time is lower while
+maintaining equivalent acceptance and security requirements. If the optimized
+Hydra is slower for small tasks, preserve the fast path and document the
+limitation. Prefer improving end-to-end completion time over optimizing isolated
+agent response times.
 
 Investigate every acceptance failure before claiming the optimized policy is
 successful. Report failures and any changed fixtures/protocol; rerun matched

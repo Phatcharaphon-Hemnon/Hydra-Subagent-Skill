@@ -2,7 +2,7 @@
 
 Hydra helps an agent review or change a project with several independent perspectives. It asks focused planning heads to inspect the same request, compares their evidence and tradeoffs, carries out the authorized work, then verifies the result. It works with Codex, Claude Code, Gemini CLI, and OpenCode.
 
-> **At a glance:** Classify scope/risk → authorize → `hydra-work` implements → `hydra-verify` checks. Planning is optional: when it runs, 2 / 3 / 5 relevant independent heads converge to a 5-field handoff first, but an authorized request can enter work directly with a brief scope. Planning never edits; verification never fixes source.
+> **At a glance:** Classify scope/risk → authorize → `hydra-work` implements → `hydra-verify` checks. Tier 0 bypasses planning entirely: authorized low-risk fixes go directly to work with proportional verification. Otherwise 2 / 3 / 5 relevant independent heads converge to a 5-field handoff first, but an authorized request can enter work directly with a brief scope. Planning never edits; verification never fixes source.
 
 ![Hydra workflow](docs/assets/hydra-flow.svg)
 
@@ -157,6 +157,21 @@ With OpenCode installed, `HYDRA_NATIVE_ROLE_CHECK=1 python3 -m unittest discover
 CI runs installation and native configuration parsing tests on Linux and macOS with Python 3.11 and 3.14. It does not run authenticated model sessions; follow the acceptance checklist for live role behavior.
 
 </details>
+
+## Optional security skills and benchmarking
+
+External cybersecurity guidance is optional and lazy-loaded (see [security skills](docs/SECURITY-SKILLS.md)). To install a pinned revision outside all auto-discovered skills directories:
+
+```bash
+bash scripts/install-security-skills.sh --pin <commit-sha>
+```
+
+To compare single-agent, baseline Hydra, and optimized Hydra runs, use the [benchmark protocol](docs/BENCHMARKS.md) with its runnable harness:
+
+```bash
+bash scripts/hydra-bench.sh --list
+bash scripts/hydra-bench.sh --init --dir /tmp/opencode/hydra-bench --host codex
+```
 
 ## Other agent CLIs
 

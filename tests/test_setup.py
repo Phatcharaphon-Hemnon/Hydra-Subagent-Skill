@@ -161,6 +161,13 @@ class SetupTests(unittest.TestCase):
                     self.assertEqual(again.returncode, 0, again.stderr)
                     self.assertIn(f"0 installed, {len(package_files((cli,)))} unchanged", again.stdout)
 
+    def test_full_install_leaves_security_skills_optional(self):
+        self.assertEqual(self.run_setup("--all").returncode, 0)
+        skills = self.user / ".agents/skills"
+        self.assertEqual(sorted(p.name for p in skills.iterdir()), ["hydra-review"])
+        self.assertFalse((self.user / "vendor").exists())
+        self.assertFalse((PACKAGE / "vendor").exists())
+
     def test_role_conflict_is_backed_up(self):
         self.assertEqual(self.run_setup("--cli", "codex").returncode, 0)
         role = self.user / ".codex/agents/hydra-plan.toml"
